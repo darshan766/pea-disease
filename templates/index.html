@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pea Disease Detection AI</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+height:100vh;
+background:#0c1116;
+color:white;
+display:flex;
+align-items:center;
+justify-content:center;
+}
+
+/* MAIN WRAPPER */
+
+.wrapper{
+width:1100px;
+height:600px;
+display:flex;
+border-radius:20px;
+overflow:hidden;
+background:#121a22;
+box-shadow:0 20px 60px rgba(0,0,0,0.6);
+}
+
+/* LEFT PANEL */
+
+.left{
+flex:1;
+padding:50px;
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+
+.left h1{
+font-size:36px;
+margin-bottom:10px;
+}
+
+.left p{
+opacity:0.7;
+margin-bottom:40px;
+}
+
+.upload{
+border:2px dashed rgba(255,255,255,0.3);
+padding:40px;
+border-radius:14px;
+text-align:center;
+cursor:pointer;
+transition:0.3s;
+}
+
+.upload:hover{
+border-color:#4ade80;
+background:rgba(255,255,255,0.05);
+}
+
+.upload input{
+display:none;
+}
+
+.upload-icon{
+font-size:40px;
+margin-bottom:10px;
+}
+
+/* BUTTON */
+
+button{
+margin-top:25px;
+padding:14px;
+border:none;
+border-radius:10px;
+background:#4ade80;
+font-weight:600;
+cursor:pointer;
+transition:0.3s;
+}
+
+button:hover{
+transform:translateY(-2px);
+}
+
+/* RIGHT PANEL */
+
+.right{
+flex:1;
+padding:40px;
+background:#0f151c;
+display:flex;
+flex-direction:column;
+justify-content:center;
+}
+
+/* IMAGE PREVIEW */
+
+.preview{
+width:100%;
+height:300px;
+background:#111;
+border-radius:12px;
+overflow:hidden;
+display:flex;
+align-items:center;
+justify-content:center;
+margin-bottom:25px;
+}
+
+.preview img{
+max-width:100%;
+max-height:100%;
+}
+
+/* RESULT */
+
+.result{
+background:#151e27;
+padding:20px;
+border-radius:10px;
+display:none;
+}
+
+.result h2{
+color:#4ade80;
+margin-bottom:5px;
+}
+
+.result p{
+opacity:0.7;
+margin-bottom:15px;
+}
+
+/* CONFIDENCE BAR */
+
+.bar{
+height:8px;
+background:#222;
+border-radius:20px;
+overflow:hidden;
+}
+
+.bar-fill{
+height:100%;
+width:0%;
+background:#4ade80;
+transition:1s;
+}
+
+/* LOADER */
+
+.loader{
+display:none;
+margin-top:20px;
+}
+
+.spinner{
+width:30px;
+height:30px;
+border:4px solid rgba(255,255,255,0.2);
+border-top:4px solid #4ade80;
+border-radius:50%;
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+to{transform:rotate(360deg);}
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="wrapper">
+
+<!-- LEFT SIDE -->
+
+<div class="left">
+
+<h1>🌿 Pea Disease Detection</h1>
+
+<p>Upload a pea leaf image and our AI model will analyze it instantly.</p>
+
+<form id="uploadForm">
+
+<label class="upload">
+
+<div class="upload-icon">📤</div>
+
+Click to Upload Image
+
+<input type="file" id="imageInput" accept="image/*" required>
+
+</label>
+
+<button type="submit">Analyze Leaf</button>
+
+</form>
+
+<div class="loader" id="loader">
+<div class="spinner"></div>
+</div>
+
+</div>
+
+
+<!-- RIGHT SIDE -->
+
+<div class="right">
+
+<div class="preview">
+<img id="preview">
+</div>
+
+<div class="result" id="result">
+
+<h2 id="disease">Disease</h2>
+
+<p id="confidence">Confidence</p>
+
+<div class="bar">
+<div class="bar-fill" id="barFill"></div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const imageInput=document.getElementById("imageInput")
+const preview=document.getElementById("preview")
+
+imageInput.addEventListener("change",function(){
+
+if(this.files && this.files[0]){
+preview.src=URL.createObjectURL(this.files[0])
+}
+
+})
+
+document.getElementById("uploadForm").addEventListener("submit",async function(e){
+
+e.preventDefault()
+
+loader.style.display="block"
+result.style.display="none"
+
+const formData=new FormData()
+formData.append("image",imageInput.files[0])
+
+const res=await fetch("/predict",{method:"POST",body:formData})
+
+const data=await res.json()
+
+loader.style.display="none"
+result.style.display="block"
+
+disease.innerText=data.disease
+confidence.innerText="Confidence: "+data.confidence+"%"
+
+barFill.style.width=data.confidence+"%"
+
+})
+
+</script>
+
+</body>
+</html>
