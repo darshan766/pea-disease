@@ -1,13 +1,17 @@
 from flask import Flask, request, jsonify, render_template
-import tensorflow as tf
 import numpy as np
 from PIL import Image
 import io
+import tflite_runtime.interpreter as tflite
 
 app = Flask(__name__)
 
-# Load the trained model
-model = tf.keras.models.load_model("pea_disease_model.keras")
+# Load TFLite model
+interpreter = tflite.Interpreter(model_path="pea_disease_model.tflite")
+interpreter.allocate_tensors()
+
+input_details  = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 # Class labels (must match training folder order)
 classes = ['Downy Mildew', 'Healthy', 'Leaf Minner', 'Powdery Mildew']
@@ -24,13 +28,14 @@ def predict():
     file = request.files["image"]
     image = Image.open(io.BytesIO(file.read())).convert("RGB")
 
-    # Resize and preprocess
     img = image.resize((224, 224))
-    img_array = np.array(img) / 255.0
+    img_array = np.array(img, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    # Predict
-    prediction = model.predict(img_array)
+    interpreter.set_tensor(input_details[0]['index'], img_array)
+    interpreter.invoke()
+
+    prediction = interpreter.get_tensor(output_details[0]['index'])
     predicted_index = np.argmax(prediction)
     predicted_class = classes[predicted_index]
     confidence = round(float(prediction[0][predicted_index]) * 100, 2)
@@ -41,7 +46,4 @@ def predict():
     })
 
 if __name__ == "__main__":
-    from pyngrok import ngrok
-    public_url = ngrok.connect(5000)
-    print(f"\n Public URL: {public_url}\n")
-    app.run(debug=False)
+    app.run(debug=True)
